@@ -2,30 +2,43 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
 <title>Naam Japa</title>
 
 <style>
+* {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
 body {
     margin: 0;
     font-family: Arial, sans-serif;
     background: #f6efe6;
     color: #3e2723;
 }
+
 .app {
-    max-width: 400px;
+    max-width: 420px;
     margin: auto;
     padding: 20px;
     text-align: center;
 }
-h1 { font-size: 20px; margin-bottom: 10px; }
-.counter { font-size: 60px; margin: 20px 0; }
+
+h1 { font-size: 20px; }
 
 select, input {
     width: 100%;
     padding: 8px;
-    margin-bottom: 8px;
     font-size: 15px;
+    margin-bottom: 8px;
+}
+
+.counter {
+    font-size: 60px;
+    margin: 20px 0;
 }
 
 .tap-btn {
@@ -36,6 +49,11 @@ select, input {
     color: white;
     font-size: 20px;
     border: none;
+    user-select: none;
+}
+
+.tap-btn:active {
+    transform: scale(0.97);
 }
 
 .progress {
@@ -44,6 +62,7 @@ select, input {
     border-radius: 10px;
     margin-top: 15px;
 }
+
 .progress-bar {
     height: 100%;
     background: #6d4c41;
@@ -69,6 +88,7 @@ table {
     border-collapse: collapse;
     font-size: 12px;
 }
+
 th, td {
     border: 1px solid #ccc;
     padding: 6px;
@@ -91,8 +111,10 @@ th, td {
         <option value="custom">Custom Mantra</option>
     </select>
 
-    <input id="customMantra" placeholder="Enter custom mantra"
-           style="display:none;" oninput="updateCustomMantra()">
+    <input id="customMantra"
+           placeholder="Enter custom mantra"
+           style="display:none;"
+           oninput="updateCustomMantra()">
 
     <div class="counter" id="count">0</div>
 
@@ -106,10 +128,9 @@ th, td {
         <button onclick="resetCount()">Reset</button>
         <button onclick="showStats()">View Stats</button>
     </div>
-
 </div>
 
-<!-- STATS PAGE -->
+<!-- STATS -->
 <div class="app" id="stats">
 
     <h2>📊 Chanting Stats</h2>
@@ -128,6 +149,7 @@ th, td {
         <tbody id="statsTable"></tbody>
     </table>
 
+    <button onclick="clearStats()">Clear Stats</button>
     <button onclick="back()">⬅ Back</button>
 </div>
 
@@ -138,51 +160,53 @@ let count = Number(localStorage.getItem("count")) || 0;
 let history = JSON.parse(localStorage.getItem("history")) || [];
 let mantra = localStorage.getItem("mantra") || "ॐ नमः शिवाय";
 
-document.getElementById("count").innerText = count;
-document.getElementById("mantraTitle").innerText = mantra;
-document.getElementById("mantraSelect").value = mantra;
-updateProgress();
+init();
+
+function init() {
+    document.getElementById("count").innerText = count;
+    document.getElementById("mantraTitle").innerText = mantra;
+    document.getElementById("mantraSelect").value =
+        ["ॐ नमः शिवाय","राम राम","हरे कृष्ण"].includes(mantra) ? mantra : "custom";
+    updateProgress();
+}
 
 function increment() {
     count++;
-    navigator.vibrate(30);
+    navigator.vibrate?.(30);
+
     localStorage.setItem("count", count);
     document.getElementById("count").innerText = count;
-    updateProgress();
 
     if (count % TARGET === 0) {
-        saveMala(108);
+        saveEntry(108);
         alert("🙏 Mala Completed 🙏");
     }
+    updateProgress();
 }
 
 function updateProgress() {
-    document.getElementById("progressBar").style.width =
-        ((count % TARGET) / TARGET * 100) + "%";
+    let percent = (count % TARGET) / TARGET * 100;
+    document.getElementById("progressBar").style.width = percent + "%";
 }
 
-function saveMala(value) {
+function saveEntry(value) {
     let date = new Date().toLocaleDateString("en-GB");
     let entry = history.find(h => h.date === date && h.mantra === mantra);
 
-    if (entry) {
-        entry.malas++;
-        entry.counts.push(value);
-    } else {
-        history.push({
-            date,
-            mantra,
-            malas: 1,
-            counts: [value]
-        });
+    if (!entry) {
+        entry = { date, mantra, malas: 0, counts: [] };
+        history.push(entry);
     }
+
+    if (value === 108) entry.malas++;
+    entry.counts.push(value);
 
     localStorage.setItem("history", JSON.stringify(history));
 }
 
 function resetCount() {
     let remaining = count % TARGET;
-    if (remaining > 0) saveMala(remaining);
+    if (remaining > 0) saveEntry(remaining);
 
     count = 0;
     localStorage.setItem("count", 0);
@@ -190,33 +214,11 @@ function resetCount() {
     updateProgress();
 }
 
-function changeMantra() {
-    let val = document.getElementById("mantraSelect").value;
-    let input = document.getElementById("customMantra");
-
-    if (val === "custom") {
-        input.style.display = "block";
-    } else {
-        input.style.display = "none";
-        mantra = val;
-        localStorage.setItem("mantra", mantra);
-        document.getElementById("mantraTitle").innerText = mantra;
-    }
-}
-
-function updateCustomMantra() {
-    mantra = document.getElementById("customMantra").value || "Custom Mantra";
-    localStorage.setItem("mantra", mantra);
-    document.getElementById("mantraTitle").innerText = mantra;
-}
-
 function showStats() {
     document.getElementById("mainApp").style.display = "none";
     document.getElementById("stats").style.display = "block";
 
-    let total = history.reduce((s, h) =>
-        s + h.counts.reduce((a, b) => a + b, 0), 0);
-
+    let total = history.flatMap(h => h.counts).reduce((a,b)=>a+b,0);
     document.getElementById("totalCount").innerText = total;
 
     let table = document.getElementById("statsTable");
@@ -225,7 +227,7 @@ function showStats() {
     history.forEach((h, i) => {
         table.innerHTML += `
         <tr>
-            <td>${i + 1}</td>
+            <td>${i+1}</td>
             <td>${h.malas}</td>
             <td>${h.counts.join(",")}</td>
             <td>${h.date}</td>
@@ -237,6 +239,33 @@ function showStats() {
 function back() {
     document.getElementById("stats").style.display = "none";
     document.getElementById("mainApp").style.display = "block";
+}
+
+function clearStats() {
+    if (!confirm("Clear all stats permanently?")) return;
+    history = [];
+    count = 0;
+    localStorage.clear();
+    init();
+    back();
+}
+
+function changeMantra() {
+    let val = document.getElementById("mantraSelect").value;
+    document.getElementById("customMantra").style.display =
+        val === "custom" ? "block" : "none";
+
+    if (val !== "custom") {
+        mantra = val;
+        localStorage.setItem("mantra", mantra);
+        document.getElementById("mantraTitle").innerText = mantra;
+    }
+}
+
+function updateCustomMantra() {
+    mantra = document.getElementById("customMantra").value || "Custom Mantra";
+    localStorage.setItem("mantra", mantra);
+    document.getElementById("mantraTitle").innerText = mantra;
 }
 </script>
 
