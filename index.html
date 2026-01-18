@@ -1,271 +1,198 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+ content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <title>Naam Japa</title>
 
 <style>
-* {
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-}
+* { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 
 body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #f6efe6;
-    color: #3e2723;
+  font-family: Arial;
+  background:#f6efe6;
+  margin:0;
 }
 
 .app {
-    max-width: 420px;
-    margin: auto;
-    padding: 20px;
-    text-align: center;
-}
-
-h1 { font-size: 20px; }
-
-select, input {
-    width: 100%;
-    padding: 8px;
-    font-size: 15px;
-    margin-bottom: 8px;
+  max-width:420px;
+  margin:auto;
+  padding:20px;
+  text-align:center;
 }
 
 .counter {
-    font-size: 60px;
-    margin: 20px 0;
+  font-size:48px;
+  margin:10px 0;
 }
 
-.tap-btn {
-    width: 220px;
-    height: 220px;
-    border-radius: 50%;
-    background: #d84315;
-    color: white;
-    font-size: 20px;
-    border: none;
-    user-select: none;
-}
-
-.tap-btn:active {
-    transform: scale(0.97);
-}
-
-.progress {
-    height: 10px;
-    background: #ddd;
-    border-radius: 10px;
-    margin-top: 15px;
-}
-
-.progress-bar {
-    height: 100%;
-    background: #6d4c41;
-    width: 0%;
+.tap {
+  width:220px;
+  height:220px;
+  border-radius:50%;
+  background:#d84315;
+  color:#fff;
+  font-size:20px;
+  border:none;
 }
 
 button {
-    padding: 10px;
-    margin: 5px;
-    border: none;
-    background: #6d4c41;
-    color: white;
-    border-radius: 5px;
-}
-
-#stats {
-    display: none;
-    text-align: left;
+  padding:10px;
+  margin:5px;
+  border:none;
+  background:#6d4c41;
+  color:#fff;
+  border-radius:5px;
 }
 
 table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
+  width:100%;
+  border-collapse:collapse;
+  font-size:12px;
 }
 
-th, td {
-    border: 1px solid #ccc;
-    padding: 6px;
-    text-align: center;
+th,td {
+  border:1px solid #ccc;
+  padding:5px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- MAIN APP -->
-<div class="app" id="mainApp">
+<audio id="bell">
+ <source src="https://assets.mixkit.co/sfx/preview/mixkit-temple-bell-big-582.mp3">
+</audio>
 
-    <h1 id="mantraTitle">ॐ नमः शिवाय</h1>
+<div class="app" id="main">
 
-    <select id="mantraSelect" onchange="changeMantra()">
-        <option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option>
-        <option value="राम राम">राम राम</option>
-        <option value="हरे कृष्ण">हरे कृष्ण</option>
-        <option value="custom">Custom Mantra</option>
-    </select>
+<h2 id="mantra">ॐ नमः शिवाय</h2>
 
-    <input id="customMantra"
-           placeholder="Enter custom mantra"
-           style="display:none;"
-           oninput="updateCustomMantra()">
+<select onchange="setMantra(this.value)">
+ <option>ॐ नमः शिवाय</option>
+ <option>राम राम</option>
+ <option>हरे कृष्ण</option>
+</select>
 
-    <div class="counter" id="count">0</div>
-
-    <button class="tap-btn" onclick="increment()">Tap to Chant</button>
-
-    <div class="progress">
-        <div class="progress-bar" id="progressBar"></div>
-    </div>
-
-    <div>
-        <button onclick="resetCount()">Reset</button>
-        <button onclick="showStats()">View Stats</button>
-    </div>
+<div class="counter">
+ Chants: <span id="chants">0</span>
 </div>
 
-<!-- STATS -->
-<div class="app" id="stats">
+<div class="counter">
+ Mala (108): <span id="mala">0</span>
+</div>
 
-    <h2>📊 Chanting Stats</h2>
-    <p><b>Total:</b> <span id="totalCount">0</span></p>
+<button class="tap" onclick="chant()">Tap</button>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Sno</th>
-                <th>Mala #</th>
-                <th>Count</th>
-                <th>Date</th>
-                <th>Mantra</th>
-            </tr>
-        </thead>
-        <tbody id="statsTable"></tbody>
-    </table>
+<div>
+ <button onclick="resetDay()">Reset Today</button>
+ <button onclick="showStats()">View Stats</button>
+</div>
 
-    <button onclick="clearStats()">Clear Stats</button>
-    <button onclick="back()">⬅ Back</button>
+</div>
+
+<div class="app" id="stats" style="display:none">
+
+<h3>📊 Stats</h3>
+<p><b>Total Chants:</b> <span id="total"></span></p>
+
+<table>
+<tr>
+ <th>Sno</th>
+ <th>Date</th>
+ <th>Mantra</th>
+ <th>Chants</th>
+ <th>Malas</th>
+</tr>
+<tbody id="rows"></tbody>
+</table>
+
+<button onclick="clearStats()">Clear Stats</button>
+<button onclick="back()">⬅ Back</button>
+
 </div>
 
 <script>
-const TARGET = 108;
+const MALA = 108;
 
-let count = Number(localStorage.getItem("count")) || 0;
-let history = JSON.parse(localStorage.getItem("history")) || [];
+let today = new Date().toLocaleDateString("en-GB");
+let data = JSON.parse(localStorage.getItem("data")) || {};
 let mantra = localStorage.getItem("mantra") || "ॐ नमः शिवाय";
 
-init();
+if (!data[today]) data[today] = { chants:0, mantra };
 
-function init() {
-    document.getElementById("count").innerText = count;
-    document.getElementById("mantraTitle").innerText = mantra;
-    document.getElementById("mantraSelect").value =
-        ["ॐ नमः शिवाय","राम राम","हरे कृष्ण"].includes(mantra) ? mantra : "custom";
-    updateProgress();
+const bell = document.getElementById("bell");
+
+updateUI();
+
+function chant() {
+ data[today].chants++;
+ localStorage.setItem("data", JSON.stringify(data));
+
+ if (data[today].chants % MALA === 0) {
+   bell.currentTime = 0;
+   bell.play();
+ }
+
+ updateUI();
 }
 
-function increment() {
-    count++;
-    navigator.vibrate?.(30);
-
-    localStorage.setItem("count", count);
-    document.getElementById("count").innerText = count;
-
-    if (count % TARGET === 0) {
-        saveEntry(108);
-        alert("🙏 Mala Completed 🙏");
-    }
-    updateProgress();
+function updateUI() {
+ let c = data[today].chants;
+ document.getElementById("chants").innerText = c;
+ document.getElementById("mala").innerText = Math.floor(c / MALA);
+ document.getElementById("mantra").innerText = mantra;
 }
 
-function updateProgress() {
-    let percent = (count % TARGET) / TARGET * 100;
-    document.getElementById("progressBar").style.width = percent + "%";
-}
-
-function saveEntry(value) {
-    let date = new Date().toLocaleDateString("en-GB");
-    let entry = history.find(h => h.date === date && h.mantra === mantra);
-
-    if (!entry) {
-        entry = { date, mantra, malas: 0, counts: [] };
-        history.push(entry);
-    }
-
-    if (value === 108) entry.malas++;
-    entry.counts.push(value);
-
-    localStorage.setItem("history", JSON.stringify(history));
-}
-
-function resetCount() {
-    let remaining = count % TARGET;
-    if (remaining > 0) saveEntry(remaining);
-
-    count = 0;
-    localStorage.setItem("count", 0);
-    document.getElementById("count").innerText = 0;
-    updateProgress();
+function resetDay() {
+ updateUI();
+ data[today] = { chants:0, mantra };
+ localStorage.setItem("data", JSON.stringify(data));
 }
 
 function showStats() {
-    document.getElementById("mainApp").style.display = "none";
-    document.getElementById("stats").style.display = "block";
+ document.getElementById("main").style.display="none";
+ document.getElementById("stats").style.display="block";
 
-    let total = history.flatMap(h => h.counts).reduce((a,b)=>a+b,0);
-    document.getElementById("totalCount").innerText = total;
+ let total = 0;
+ let rows = "";
 
-    let table = document.getElementById("statsTable");
-    table.innerHTML = "";
+ Object.keys(data).forEach((d,i)=>{
+   let c = data[d].chants;
+   let m = Math.floor(c / MALA);
+   total += c;
+   rows += `<tr>
+     <td>${i+1}</td>
+     <td>${d}</td>
+     <td>${data[d].mantra}</td>
+     <td>${c}</td>
+     <td>${m}</td>
+   </tr>`;
+ });
 
-    history.forEach((h, i) => {
-        table.innerHTML += `
-        <tr>
-            <td>${i+1}</td>
-            <td>${h.malas}</td>
-            <td>${h.counts.join(",")}</td>
-            <td>${h.date}</td>
-            <td>${h.mantra}</td>
-        </tr>`;
-    });
+ document.getElementById("rows").innerHTML = rows;
+ document.getElementById("total").innerText = total;
 }
 
-function back() {
-    document.getElementById("stats").style.display = "none";
-    document.getElementById("mainApp").style.display = "block";
+function back(){
+ document.getElementById("stats").style.display="none";
+ document.getElementById("main").style.display="block";
 }
 
-function clearStats() {
-    if (!confirm("Clear all stats permanently?")) return;
-    history = [];
-    count = 0;
-    localStorage.clear();
-    init();
-    back();
+function clearStats(){
+ if(confirm("Clear all stats?")){
+   localStorage.clear();
+   location.reload();
+ }
 }
 
-function changeMantra() {
-    let val = document.getElementById("mantraSelect").value;
-    document.getElementById("customMantra").style.display =
-        val === "custom" ? "block" : "none";
-
-    if (val !== "custom") {
-        mantra = val;
-        localStorage.setItem("mantra", mantra);
-        document.getElementById("mantraTitle").innerText = mantra;
-    }
-}
-
-function updateCustomMantra() {
-    mantra = document.getElementById("customMantra").value || "Custom Mantra";
-    localStorage.setItem("mantra", mantra);
-    document.getElementById("mantraTitle").innerText = mantra;
+function setMantra(m){
+ mantra = m;
+ localStorage.setItem("mantra", m);
+ data[today].mantra = m;
+ updateUI();
 }
 </script>
 
