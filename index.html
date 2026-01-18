@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Naam Japa</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f6efe6;
+    color: #3e2723;
+}
+.app {
+    max-width: 400px;
+    margin: auto;
+    padding: 20px;
+    text-align: center;
+}
+h1 { font-size: 20px; margin-bottom: 10px; }
+.counter { font-size: 60px; margin: 20px 0; }
+
+select, input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 8px;
+    font-size: 15px;
+}
+
+.tap-btn {
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: #d84315;
+    color: white;
+    font-size: 20px;
+    border: none;
+}
+
+.progress {
+    height: 10px;
+    background: #ddd;
+    border-radius: 10px;
+    margin-top: 15px;
+}
+.progress-bar {
+    height: 100%;
+    background: #6d4c41;
+    width: 0%;
+}
+
+button {
+    padding: 10px;
+    margin: 5px;
+    border: none;
+    background: #6d4c41;
+    color: white;
+    border-radius: 5px;
+}
+
+#stats {
+    display: none;
+    text-align: left;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+th, td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    text-align: center;
+}
+</style>
+</head>
+
+<body>
+
+<!-- MAIN APP -->
+<div class="app" id="mainApp">
+
+    <h1 id="mantraTitle">ॐ नमः शिवाय</h1>
+
+    <select id="mantraSelect" onchange="changeMantra()">
+        <option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option>
+        <option value="राम राम">राम राम</option>
+        <option value="हरे कृष्ण">हरे कृष्ण</option>
+        <option value="custom">Custom Mantra</option>
+    </select>
+
+    <input id="customMantra" placeholder="Enter custom mantra"
+           style="display:none;" oninput="updateCustomMantra()">
+
+    <div class="counter" id="count">0</div>
+
+    <button class="tap-btn" onclick="increment()">Tap to Chant</button>
+
+    <div class="progress">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div>
+        <button onclick="resetCount()">Reset</button>
+        <button onclick="showStats()">View Stats</button>
+    </div>
+
+</div>
+
+<!-- STATS PAGE -->
+<div class="app" id="stats">
+
+    <h2>📊 Chanting Stats</h2>
+    <p><b>Total:</b> <span id="totalCount">0</span></p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Sno</th>
+                <th>Mala #</th>
+                <th>Count</th>
+                <th>Date</th>
+                <th>Mantra</th>
+            </tr>
+        </thead>
+        <tbody id="statsTable"></tbody>
+    </table>
+
+    <button onclick="back()">⬅ Back</button>
+</div>
+
+<script>
+const TARGET = 108;
+
+let count = Number(localStorage.getItem("count")) || 0;
+let history = JSON.parse(localStorage.getItem("history")) || [];
+let mantra = localStorage.getItem("mantra") || "ॐ नमः शिवाय";
+
+document.getElementById("count").innerText = count;
+document.getElementById("mantraTitle").innerText = mantra;
+document.getElementById("mantraSelect").value = mantra;
+updateProgress();
+
+function increment() {
+    count++;
+    navigator.vibrate(30);
+    localStorage.setItem("count", count);
+    document.getElementById("count").innerText = count;
+    updateProgress();
+
+    if (count % TARGET === 0) {
+        saveMala(108);
+        alert("🙏 Mala Completed 🙏");
+    }
+}
+
+function updateProgress() {
+    document.getElementById("progressBar").style.width =
+        ((count % TARGET) / TARGET * 100) + "%";
+}
+
+function saveMala(value) {
+    let date = new Date().toLocaleDateString("en-GB");
+    let entry = history.find(h => h.date === date && h.mantra === mantra);
+
+    if (entry) {
+        entry.malas++;
+        entry.counts.push(value);
+    } else {
+        history.push({
+            date,
+            mantra,
+            malas: 1,
+            counts: [value]
+        });
+    }
+
+    localStorage.setItem("history", JSON.stringify(history));
+}
+
+function resetCount() {
+    let remaining = count % TARGET;
+    if (remaining > 0) saveMala(remaining);
+
+    count = 0;
+    localStorage.setItem("count", 0);
+    document.getElementById("count").innerText = 0;
+    updateProgress();
+}
+
+function changeMantra() {
+    let val = document.getElementById("mantraSelect").value;
+    let input = document.getElementById("customMantra");
+
+    if (val === "custom") {
+        input.style.display = "block";
+    } else {
+        input.style.display = "none";
+        mantra = val;
+        localStorage.setItem("mantra", mantra);
+        document.getElementById("mantraTitle").innerText = mantra;
+    }
+}
+
+function updateCustomMantra() {
+    mantra = document.getElementById("customMantra").value || "Custom Mantra";
+    localStorage.setItem("mantra", mantra);
+    document.getElementById("mantraTitle").innerText = mantra;
+}
+
+function showStats() {
+    document.getElementById("mainApp").style.display = "none";
+    document.getElementById("stats").style.display = "block";
+
+    let total = history.reduce((s, h) =>
+        s + h.counts.reduce((a, b) => a + b, 0), 0);
+
+    document.getElementById("totalCount").innerText = total;
+
+    let table = document.getElementById("statsTable");
+    table.innerHTML = "";
+
+    history.forEach((h, i) => {
+        table.innerHTML += `
+        <tr>
+            <td>${i + 1}</td>
+            <td>${h.malas}</td>
+            <td>${h.counts.join(",")}</td>
+            <td>${h.date}</td>
+            <td>${h.mantra}</td>
+        </tr>`;
+    });
+}
+
+function back() {
+    document.getElementById("stats").style.display = "none";
+    document.getElementById("mainApp").style.display = "block";
+}
+</script>
+
+</body>
+</html>
