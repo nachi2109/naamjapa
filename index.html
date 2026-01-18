@@ -8,10 +8,7 @@
 <title>Naam Japa</title>
 
 <style>
-* {
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
+* { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 
 body {
   font-family: Arial;
@@ -27,19 +24,23 @@ body {
   position:relative;
 }
 
-/* Top Right Menu */
+/* Menu */
 .menu {
   position:absolute;
   top:10px;
   right:10px;
 }
-
 .menu button {
-  background:none;
-  border:none;
-  font-size:22px;
+  background:#ffffff;
+  border:2px solid #333;
+  font-size:26px;
+  font-weight:bold;
+  color:#111;
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  cursor:pointer;
 }
-
 .menu-list {
   display:none;
   position:absolute;
@@ -48,17 +49,15 @@ body {
   border:1px solid #ccc;
   border-radius:5px;
 }
-
 .menu-list div {
-  padding:8px 12px;
+  padding:10px 14px;
   cursor:pointer;
+  font-weight:bold;
+  color:#222;
 }
+.menu-list div:hover { background:#eee; }
 
-.menu-list div:hover {
-  background:#eee;
-}
-
-/* Main mantra */
+/* Mantra */
 .mantra {
   font-size:32px;
   font-weight:bold;
@@ -66,12 +65,9 @@ body {
 }
 
 /* Counters */
-.counter {
-  font-size:20px;
-  margin:5px;
-}
+.counter { font-size:18px; margin:4px; }
 
-/* Tap button */
+/* Tap */
 .tap {
   width:220px;
   height:220px;
@@ -97,11 +93,7 @@ table {
   border-collapse:collapse;
   font-size:12px;
 }
-
-th,td {
-  border:1px solid #ccc;
-  padding:5px;
-}
+th,td { border:1px solid #ccc; padding:5px; }
 </style>
 </head>
 
@@ -113,7 +105,7 @@ th,td {
 
 <div class="app" id="main">
 
-<!-- Top Right Menu -->
+<!-- Menu -->
 <div class="menu">
  <button onclick="toggleMenu()">⋮</button>
  <div class="menu-list" id="menuList">
@@ -126,13 +118,14 @@ th,td {
 
 <div class="mantra" id="mantra">ॐ नमः शिवाय</div>
 
-<div class="counter">Chants: <span id="chants">0</span></div>
-<div class="counter">Mala (108): <span id="mala">0</span></div>
+<div class="counter">Today Chants: <b><span id="todayChants">0</span></b></div>
+<div class="counter">Today Mala (108): <b><span id="todayMala">0</span></b></div>
+<div class="counter">Total Chants: <b><span id="totalChants">0</span></b></div>
 
 <button class="tap" onclick="chant()">Tap</button>
 
 <div>
- <button onclick="resetDay()">Reset Today</button>
+ <button onclick="resetToday()">Reset Today</button>
  <button onclick="showStats()">View Stats</button>
 </div>
 
@@ -141,7 +134,7 @@ th,td {
 <div class="app" id="stats" style="display:none">
 
 <h3>📊 Stats</h3>
-<p><b>Total Chants:</b> <span id="total"></span></p>
+<p><b>Total Chants:</b> <span id="statsTotal"></span></p>
 
 <table>
 <tr>
@@ -161,22 +154,30 @@ th,td {
 
 <script>
 const MALA = 108;
-let today = new Date().toLocaleDateString("en-GB");
+const today = new Date().toLocaleDateString("en-GB");
 
-let data = JSON.parse(localStorage.getItem("data")) || {};
+let store = JSON.parse(localStorage.getItem("store")) || {
+ total: 0,
+ days: {}
+};
+
 let mantra = localStorage.getItem("mantra") || "ॐ नमः शिवाय";
 
-if (!data[today]) data[today] = { chants:0, mantra };
+if (!store.days[today]) {
+ store.days[today] = { chants: 0, mantra };
+}
 
 const bell = document.getElementById("bell");
 
 updateUI();
 
 function chant() {
- data[today].chants++;
- localStorage.setItem("data", JSON.stringify(data));
+ store.days[today].chants++;
+ store.total++;
 
- if (data[today].chants % MALA === 0) {
+ localStorage.setItem("store", JSON.stringify(store));
+
+ if (store.days[today].chants % MALA === 0) {
    bell.currentTime = 0;
    bell.play();
  }
@@ -185,72 +186,71 @@ function chant() {
 }
 
 function updateUI() {
- let c = data[today].chants;
- document.getElementById("chants").innerText = c;
- document.getElementById("mala").innerText = Math.floor(c / MALA);
+ const c = store.days[today].chants;
+ document.getElementById("todayChants").innerText = c;
+ document.getElementById("todayMala").innerText = Math.floor(c / MALA);
+ document.getElementById("totalChants").innerText = store.total;
  document.getElementById("mantra").innerText = mantra;
 }
 
-function resetDay() {
- data[today] = { chants:0, mantra };
- localStorage.setItem("data", JSON.stringify(data));
+function resetToday() {
+ store.days[today].chants = 0;
+ localStorage.setItem("store", JSON.stringify(store));
  updateUI();
 }
 
+/* Stats */
 function showStats() {
  document.getElementById("main").style.display="none";
  document.getElementById("stats").style.display="block";
 
- let total = 0, rows = "";
+ let rows = "";
+ let i = 1;
 
- Object.keys(data).forEach((d,i)=>{
-   let c = data[d].chants;
-   let m = Math.floor(c / MALA);
-   total += c;
+ Object.keys(store.days).forEach(d => {
+   let c = store.days[d].chants;
    rows += `<tr>
-     <td>${i+1}</td>
+     <td>${i++}</td>
      <td>${d}</td>
-     <td>${data[d].mantra}</td>
+     <td>${store.days[d].mantra}</td>
      <td>${c}</td>
-     <td>${m}</td>
+     <td>${Math.floor(c / MALA)}</td>
    </tr>`;
  });
 
  document.getElementById("rows").innerHTML = rows;
- document.getElementById("total").innerText = total;
+ document.getElementById("statsTotal").innerText = store.total;
 }
 
-function back(){
+function back() {
  document.getElementById("stats").style.display="none";
  document.getElementById("main").style.display="block";
 }
 
-function clearStats(){
- if(confirm("Clear all stats?")){
+function clearStats() {
+ if (confirm("This will delete ALL history. Continue?")) {
    localStorage.clear();
    location.reload();
  }
 }
 
 /* Menu */
-function toggleMenu(){
- let m = document.getElementById("menuList");
+function toggleMenu() {
+ const m = document.getElementById("menuList");
  m.style.display = m.style.display === "block" ? "none" : "block";
 }
 
-function setMantra(m){
+function setMantra(m) {
  mantra = m;
  localStorage.setItem("mantra", m);
- data[today].mantra = m;
+ store.days[today].mantra = m;
  toggleMenu();
  updateUI();
 }
 
-function customMantra(){
- let m = prompt("Enter your mantra");
- if(m){
-   setMantra(m);
- }
+function customMantra() {
+ const m = prompt("Enter your mantra");
+ if (m) setMantra(m);
 }
 </script>
 
