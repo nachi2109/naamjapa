@@ -8,7 +8,10 @@
 <title>Naam Japa</title>
 
 <style>
-* { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+* {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
 
 body {
   font-family: Arial;
@@ -21,13 +24,54 @@ body {
   margin:auto;
   padding:20px;
   text-align:center;
+  position:relative;
 }
 
+/* Top Right Menu */
+.menu {
+  position:absolute;
+  top:10px;
+  right:10px;
+}
+
+.menu button {
+  background:none;
+  border:none;
+  font-size:22px;
+}
+
+.menu-list {
+  display:none;
+  position:absolute;
+  right:0;
+  background:#fff;
+  border:1px solid #ccc;
+  border-radius:5px;
+}
+
+.menu-list div {
+  padding:8px 12px;
+  cursor:pointer;
+}
+
+.menu-list div:hover {
+  background:#eee;
+}
+
+/* Main mantra */
+.mantra {
+  font-size:32px;
+  font-weight:bold;
+  margin:40px 0 20px;
+}
+
+/* Counters */
 .counter {
-  font-size:48px;
-  margin:10px 0;
+  font-size:20px;
+  margin:5px;
 }
 
+/* Tap button */
 .tap {
   width:220px;
   height:220px;
@@ -36,6 +80,7 @@ body {
   color:#fff;
   font-size:20px;
   border:none;
+  margin:15px 0;
 }
 
 button {
@@ -68,21 +113,21 @@ th,td {
 
 <div class="app" id="main">
 
-<h2 id="mantra">ॐ नमः शिवाय</h2>
-
-<select onchange="setMantra(this.value)">
- <option>ॐ नमः शिवाय</option>
- <option>राम राम</option>
- <option>हरे कृष्ण</option>
-</select>
-
-<div class="counter">
- Chants: <span id="chants">0</span>
+<!-- Top Right Menu -->
+<div class="menu">
+ <button onclick="toggleMenu()">⋮</button>
+ <div class="menu-list" id="menuList">
+   <div onclick="setMantra('ॐ नमः शिवाय')">ॐ नमः शिवाय</div>
+   <div onclick="setMantra('राम राम')">राम राम</div>
+   <div onclick="setMantra('हरे कृष्ण')">हरे कृष्ण</div>
+   <div onclick="customMantra()">Custom</div>
+ </div>
 </div>
 
-<div class="counter">
- Mala (108): <span id="mala">0</span>
-</div>
+<div class="mantra" id="mantra">ॐ नमः शिवाय</div>
+
+<div class="counter">Chants: <span id="chants">0</span></div>
+<div class="counter">Mala (108): <span id="mala">0</span></div>
 
 <button class="tap" onclick="chant()">Tap</button>
 
@@ -116,8 +161,8 @@ th,td {
 
 <script>
 const MALA = 108;
-
 let today = new Date().toLocaleDateString("en-GB");
+
 let data = JSON.parse(localStorage.getItem("data")) || {};
 let mantra = localStorage.getItem("mantra") || "ॐ नमः शिवाय";
 
@@ -147,17 +192,16 @@ function updateUI() {
 }
 
 function resetDay() {
- updateUI();
  data[today] = { chants:0, mantra };
  localStorage.setItem("data", JSON.stringify(data));
+ updateUI();
 }
 
 function showStats() {
  document.getElementById("main").style.display="none";
  document.getElementById("stats").style.display="block";
 
- let total = 0;
- let rows = "";
+ let total = 0, rows = "";
 
  Object.keys(data).forEach((d,i)=>{
    let c = data[d].chants;
@@ -188,11 +232,25 @@ function clearStats(){
  }
 }
 
+/* Menu */
+function toggleMenu(){
+ let m = document.getElementById("menuList");
+ m.style.display = m.style.display === "block" ? "none" : "block";
+}
+
 function setMantra(m){
  mantra = m;
  localStorage.setItem("mantra", m);
  data[today].mantra = m;
+ toggleMenu();
  updateUI();
+}
+
+function customMantra(){
+ let m = prompt("Enter your mantra");
+ if(m){
+   setMantra(m);
+ }
 }
 </script>
 
