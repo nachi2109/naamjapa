@@ -22,9 +22,11 @@ body{
 .app{
   max-width:420px;
   margin:auto;
-  padding:24px 20px 30px;
+  padding:24px 20px 20px;
   text-align:center;
   position:relative;
+  min-height:100vh;
+  box-sizing:border-box;
 }
 
 /* SETTINGS MENU */
@@ -122,6 +124,18 @@ body{
   border:none;
 }
 
+/* FOOTER */
+.footer{
+  position:absolute;
+  bottom:16px;
+  left:0;
+  right:0;
+  text-align:center;
+  font-size:13px;
+  color:#6d4c41;
+  opacity:0.85;
+}
+
 /* TABLE */
 table{
   width:100%;
@@ -181,6 +195,11 @@ th,td{
   <button onclick="showStats()">View Stats</button>
 </div>
 
+<div class="footer">
+  Made with ❤️<br>
+  by Nachiket
+</div>
+
 </div>
 
 <!-- STATS SCREEN -->
@@ -203,6 +222,11 @@ th,td{
 <br>
 <button onclick="clearStats()">Clear All Stats</button>
 <button onclick="back()">⬅ Back</button>
+
+<div class="footer">
+  Made with ❤️<br>
+  by Nachiket
+</div>
 
 </div>
 
